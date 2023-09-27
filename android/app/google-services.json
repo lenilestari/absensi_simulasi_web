@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1061911094062",
+    "project_id": "attendance-app-f44de",
+    "storage_bucket": "attendance-app-f44de.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061911094062:android:9cabe5461bdeac80dfd0bf",
+        "android_client_info": {
+          "package_name": "com.example.absensi_simulasi_mmtc_20"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0jeHOaMin9qJ4xHW7Ic8rvndo0qrum2w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
