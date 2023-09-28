@@ -93,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Align(
               alignment: Alignment.center,
               child: Text(
-                "Nama ${User.usernameId}",
+                "Hai ${User.usernameId}",
                 style: const TextStyle(
                   fontFamily: "font_2",
                   fontSize: 18,
@@ -103,8 +103,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(
               height: 24,
             ),
-            textField("First Name", "Firt Name", firstName),
-            textField("Last Name", "Last Name", lastName),
+            User.canEdit
+                ? textField("First Name", "Firt Name", firstName)
+                : field("First Name", User.firstName),
+            User.canEdit
+                ? textField("Last Name", "Last Name", lastName)
+                : field("Last Name", User.lastName),
             GestureDetector(
               onTap: () {
                 showDatePicker(
@@ -148,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             User.canEdit
                 ? textField("Address", "Address", addressName)
-                : field("Address", "Address"),
+                : field("Address", User.address),
             User.canEdit
                 ? GestureDetector(
                     onTap: () async {
@@ -179,6 +183,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           }).then((value) {
                             setState(() {
                               User.canEdit = false;
+                              User.firstName = namaPertama;
+                              User.lastName = namaKedua;
+                              User.birthDate = ulangTahun;
+                              User.address = Alamat;
                             });
                           });
                         }

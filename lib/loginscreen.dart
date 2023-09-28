@@ -67,10 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  fieldTitle("Masukan NIM"),
-                  customField("Masukan NIM kamu", idController),
-                  fieldTitle("Masukan password"),
-                  customPasswordField("Masukan password kamu", passController),
+                  fieldTitle("Enter your name"),
+                  customField("Enter your name here", idController),
+                  fieldTitle("Enter your password"),
+                  customPasswordField(
+                      "Enter your password here", passController),
                   GestureDetector(
                     onTap: () async {
                       String id = idController.text.trim();
@@ -79,12 +80,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       if (id.isEmpty) {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(const SnackBar(
-                          content: Text("NIM tidak boleh kosong"),
+                          content: Text("Name cannot be empty"),
                         ));
                       } else if (password.isEmpty) {
                         ScaffoldMessenger.of(context)
                             .showSnackBar(const SnackBar(
-                          content: Text("Password tidak boleh kosong"),
+                          content: Text("Password cannot be empty"),
                         ));
                       } else {
                         QuerySnapshot querySnapshot = await FirebaseFirestore
@@ -109,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 firstDocumentData['password'];
 
                             if (password == hashedPasswordFromDatabase) {
-                              print("Password cocok, lanjutkan");
+                              print("Password matches, continue");
 
                               sharedPreferences =
                                   await SharedPreferences.getInstance();
@@ -124,19 +125,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             } else {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
-                                content: Text("Periksa kembali password kamu"),
+                                content: Text("Double check your password"),
                               ));
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content:
-                                  Text("Terjadi kesalahan: ${e.toString()}"),
+                                  Text("There is an error: ${e.toString()}"),
                             ));
                           }
                         } else {
                           ScaffoldMessenger.of(context)
                               .showSnackBar(const SnackBar(
-                            content: Text("Periksa lagi Nim kamu"),
+                            content: Text("Check your name again"),
                           ));
                         }
                       }
