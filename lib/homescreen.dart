@@ -33,19 +33,33 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _startLocationServices();
-    _createCredentials();
-    getId();
+    getId().then((value) {
+      _createCredentials();
+      _getProfilePic();
+    });
   }
 
   void _createCredentials() async {
+    try {
+      DocumentSnapshot doc =
+          await FirebaseFirestore.instance.collection("NIM").doc(User.id).get();
+      setState(() {
+        User.canEdit = doc['canEdit'];
+        User.firstName = doc['firstName'];
+        User.lastName = doc['lastName'];
+        User.birthDate = doc['birtDate'];
+        User.address = doc['address'];
+      });
+    } catch (e) {
+      return;
+    }
+  }
+
+  void _getProfilePic() async {
     DocumentSnapshot doc =
         await FirebaseFirestore.instance.collection("NIM").doc(User.id).get();
     setState(() {
-      User.canEdit = doc['canEdit'];
-      User.firstName = doc['firstName'];
-      User.lastName = doc['lastName'];
-      User.birthDate = doc['birtDate'];
-      User.address = doc['address'];
+      User.profilePickLink = doc['profilePic'];
     });
   }
 
@@ -65,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void getId() async {
+  Future<void> getId() async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection("NIM")
         .where('id', isEqualTo: User.usernameId)

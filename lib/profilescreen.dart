@@ -22,6 +22,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Color primary = Color(0xFF176B87);
   String birth = "Date of Birth";
 
+  // String downloadUrl; // untul upload foto
+
   TextEditingController firstName = TextEditingController();
   TextEditingController lastName = TextEditingController();
   TextEditingController addressName = TextEditingController();
@@ -36,14 +38,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     Reference ref = FirebaseStorage.instance
         .ref()
-        .child("${User.usernameId.toLowerCase()}_profilejpg");
+        .child("${User.usernameId.toLowerCase()}_profile.jpg");
 
-    await ref.putFile(File(image!.path));
+    TaskSnapshot uploadedFile = await ref.putFile(File(image!.path));
 
-    ref.getDownloadURL().then((value) {
+    if (uploadedFile.state == TaskState.success) {
+      String downloadUrl = await ref.getDownloadURL();
       setState(() {
-        User.profilePickLink = value;
+        User.profilePickLink = downloadUrl;
       });
+    }
+
+    await FirebaseFirestore.instance.collection("NIM").doc(User.id).update({
+      'profilePicture': User.profilePickLink,
     });
   }
 
@@ -77,7 +84,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: Colors.white,
                           size: 80,
                         )
-                      : Image.network(User.profilePickLink),
+                      : ClipRect(
+                          child: Image.network(User.profilePickLink),
+                        ),
                 ),
               ),
             ),
@@ -96,16 +105,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             textField("First Name", "Firt Name", firstName),
             textField("Last Name", "Last Name", lastName),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Date of Birth",
-                style: TextStyle(
-                  fontFamily: "font_2",
-                  color: Colors.black26,
-                ),
-              ),
-            ),
             GestureDetector(
               onTap: () {
                 showDatePicker(
@@ -145,86 +144,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   });
                 });
               },
-              child: Container(
-                height: kToolbarHeight,
-                width: screenWidth,
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.only(left: 12),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    border: Border.all(
-                      color: Colors.black26,
-                    )),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    birth,
-                    style: const TextStyle(
-                      color: Colors.black26,
-                      fontFamily: "font_2",
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
+              child: field("Date of Birth", birth),
             ),
-            textField("Address", "Address", addressName),
-            GestureDetector(
-              onTap: () async {
-                String namaPertama = firstName.text;
-                String namaKedua = lastName.text;
-                String ulangTahun = birth;
-                String Alamat = addressName.text;
+            User.canEdit
+                ? textField("Address", "Address", addressName)
+                : field("Address", "Address"),
+            User.canEdit
+                ? GestureDetector(
+                    onTap: () async {
+                      String namaPertama = firstName.text;
+                      String namaKedua = lastName.text;
+                      String ulangTahun = birth;
+                      String Alamat = addressName.text;
 
-                if (User.canEdit) {
-                  if (namaPertama.isEmpty) {
-                    showSnackBar("Please enter your first name!");
-                  } else if (namaKedua.isEmpty) {
-                    showSnackBar("Please enter your last name!");
-                  } else if (ulangTahun.isEmpty) {
-                    showSnackBar("Please enter your birth date!");
-                  } else if (Alamat.isEmpty) {
-                    showSnackBar("Please enter your address!");
-                  } else {
-                    await FirebaseFirestore.instance
-                        .collection("NIM")
-                        .doc(User.id)
-                        .update({
-                      'firstName': namaPertama,
-                      'lastName': namaKedua,
-                      'birtDate': ulangTahun,
-                      'address': Alamat,
-                      'canEdit': false,
-                    });
-                  }
-                } else {
-                  showSnackBar(
-                      "You can't edit anymore, please contact support team");
-                }
-              },
-              child: Container(
-                height: kToolbarHeight,
-                width: screenWidth,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                  color: primary,
-                ),
-                child: const Center(
-                  child: Text(
-                    "SAVE",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: "font_2",
-                      fontSize: 16,
+                      if (User.canEdit) {
+                        if (namaPertama.isEmpty) {
+                          showSnackBar("Please enter your first name!");
+                        } else if (namaKedua.isEmpty) {
+                          showSnackBar("Please enter your last name!");
+                        } else if (ulangTahun.isEmpty) {
+                          showSnackBar("Please enter your birth date!");
+                        } else if (Alamat.isEmpty) {
+                          showSnackBar("Please enter your address!");
+                        } else {
+                          await FirebaseFirestore.instance
+                              .collection("NIM")
+                              .doc(User.id)
+                              .update({
+                            'firstName': namaPertama,
+                            'lastName': namaKedua,
+                            'birtDate': ulangTahun,
+                            'address': Alamat,
+                            'canEdit': false,
+                          }).then((value) {
+                            setState(() {
+                              User.canEdit = false;
+                            });
+                          });
+                        }
+                      } else {
+                        showSnackBar(
+                            "You can't edit anymore, please contact support team");
+                      }
+                    },
+                    child: Container(
+                      height: kToolbarHeight,
+                      width: screenWidth,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: primary,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          "SAVE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: "font_2",
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
-            ),
+                  )
+                : const SizedBox(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget field(String title, String text) {
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontFamily: "font_2",
+              color: Colors.black26,
+            ),
+          ),
+        ),
+        Container(
+          height: kToolbarHeight,
+          width: screenWidth,
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(left: 12),
+          decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(
+                color: Colors.black26,
+              )),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.black26,
+                fontFamily: "font_2",
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
