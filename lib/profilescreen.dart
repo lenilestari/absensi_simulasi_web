@@ -109,47 +109,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
             User.canEdit
                 ? textField("Last Name", "Last Name", lastName)
                 : field("Last Name", User.lastName),
-            GestureDetector(
-              onTap: () {
-                showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(1945),
-                    lastDate: DateTime.now(),
-                    builder: (context, child) {
-                      return Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: ColorScheme.light(
-                            primary: primary,
-                            secondary: primary,
-                            onSecondary: Colors.white,
-                          ),
-                          textButtonTheme: TextButtonThemeData(
-                              style: TextButton.styleFrom(
-                            primary: primary,
-                          )),
-                          textTheme: const TextTheme(
-                            headline4: TextStyle(
-                              fontFamily: "font_2",
-                            ),
-                            overline: TextStyle(
-                              fontFamily: "font_2",
-                            ),
-                            button: TextStyle(
-                              fontFamily: "font_2",
-                            ),
-                          ),
-                        ),
-                        child: child!,
-                      );
-                    }).then((value) {
-                  setState(() {
-                    birth = DateFormat("MM/dd/yyyy").format(value!);
-                  });
-                });
-              },
-              child: field("Date of Birth", birth),
-            ),
+            User.canEdit
+                ? GestureDetector(
+                    onTap: () {
+                      showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(1945),
+                          lastDate: DateTime.now(),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary: primary,
+                                  secondary: primary,
+                                  onSecondary: Colors.white,
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                    style: TextButton.styleFrom(
+                                  primary: primary,
+                                )),
+                                textTheme: const TextTheme(
+                                  headline4: TextStyle(
+                                    fontFamily: "font_2",
+                                  ),
+                                  overline: TextStyle(
+                                    fontFamily: "font_2",
+                                  ),
+                                  button: TextStyle(
+                                    fontFamily: "font_2",
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          }).then((value) {
+                        setState(() {
+                          birth = DateFormat("MM/dd/yyyy").format(value!);
+                        });
+                      });
+                    },
+                    child: field("Date of Birth", birth),
+                  )
+                : field("Date of Birth", User.birthDate),
             User.canEdit
                 ? textField("Address", "Address", addressName)
                 : field("Address", User.address),
