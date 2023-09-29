@@ -9,4 +9,5 @@ class User {
   static double lat = 0;
   static double long = 0;
   static bool canEdit = true;
+  static String dailyReportText = "";
 }

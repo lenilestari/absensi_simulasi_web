@@ -23,6 +23,10 @@ class _TodayScreenState extends State<TodayScreen> {
 
   String location = " ";
 
+  bool isCheckingIN = true; // ini untuk mengontrol tampila daily report
+
+  String dailyReportText = ""; // ini untuk nyimpan teks dari daily report
+
   Color primary = Color(0xFF176B87);
 
   @override
@@ -58,11 +62,13 @@ class _TodayScreenState extends State<TodayScreen> {
       setState(() {
         checkIn = querySnapshot2['checkIn'];
         checkOut = querySnapshot2['checkOut'];
+        User.dailyReportText = querySnapshot2['dailyReportText'] ?? "";
       });
     } catch (e) {
       setState(() {
         checkIn = "--/--";
         checkOut = "--/--";
+        User.dailyReportText = "";
       });
     }
     print(checkIn);
@@ -238,18 +244,35 @@ class _TodayScreenState extends State<TodayScreen> {
                             innerColor: primary,
                             key: key,
                             onSubmit: () async {
-                              //
-                              // Timer(Duration(seconds: 1), () {
-                              //   key.currentState!.reset();
-                              // });
-
-                              // Future.delayed(Duration(milliseconds: 500), (){
-                              //   key.currentState!.reset();
-                              //
-                              // });
-
                               if (User.lat != 0) {
-                                _getLocation();
+                                if (isCheckingIN) {
+                                  setState(() {
+                                    isCheckingIN = false;
+                                  });
+                                } else {
+                                  if (User.lat != 0) _getLocation();
+
+                                  try {
+                                    // simpan data checkout ke firebase firestore
+                                    await FirebaseFirestore.instance
+                                        .collection("NIM")
+                                        .doc(User.dailyReportText)
+                                        .collection("Record")
+                                        .doc(DateFormat('dd MMMM yyyy')
+                                            .format(DateTime.now()))
+                                        .update({
+                                      'date': Timestamp.now(),
+                                      'checkIn': checkIn,
+                                      'checkOut': DateFormat('hh:mm')
+                                          .format(DateTime.now()),
+                                      'CheckInLocation': location,
+                                      'dailyReportText': User.dailyReportText,
+                                    });
+                                  } catch (e) {
+                                    // Handle jika terjadi kesalahan saat menyimpan data
+                                  }
+                                  key.currentState!.reset();
+                                }
 
                                 print(
                                     DateFormat('hh:mm').format(DateTime.now()));
@@ -417,6 +440,45 @@ class _TodayScreenState extends State<TodayScreen> {
                     "Location : " + location,
                   )
                 : const SizedBox(),
+            Container(
+              margin: const EdgeInsets.only(top: 20),
+              child: isCheckingIN
+                  ? Container(
+                      // catatan disini kalo ada error cek disini
+                      // Tampilkan daily report saat check-in
+                      child: Column(
+                        children: [
+                          // Tambahkan konten daily report di sini
+                          Text(
+                            "Daily Report",
+                            style: TextStyle(
+                              fontFamily: "font_2",
+                              fontSize: screenWidth / 20,
+                              color: Colors.black,
+                            ),
+                          ),
+
+                          SizedBox(height: 10),
+                          TextFormField(
+                            // Ini adalah input teks untuk daily report
+                            decoration: InputDecoration(
+                              // labelText: 'Daily Report',
+                              border: OutlineInputBorder(),
+                              alignLabelWithHint: true,
+                            ),
+                            maxLines: 7,
+                            onChanged: (text) {
+                              // Mengambil nilai input dan menyimpannya
+                              setState(() {
+                                dailyReportText = text;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(), // Sembunyikan daily report saat check-out
+            ),
           ],
         ),
       ),
