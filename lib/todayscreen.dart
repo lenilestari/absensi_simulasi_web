@@ -41,6 +41,9 @@ class _TodayScreenState extends State<TodayScreen> {
 
   void _sendPerizinan() async {
     try {
+      // Pertama, dapatkan lokasi saat ini
+      await _getLocation();
+
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection("NIM")
           .where('id', isEqualTo: User.usernameId)
@@ -55,6 +58,7 @@ class _TodayScreenState extends State<TodayScreen> {
           .set({
         'date': Timestamp.now(),
         'perizinanText': PerizinanText, // Menyimpan teks perizinan
+        'perizinanLocation': location, // Menyimpan lokasi perizinan
       });
 
       // Mengubah tampilan untuk menampilkan bahwa perizinan telah dikirim
@@ -67,7 +71,7 @@ class _TodayScreenState extends State<TodayScreen> {
     }
   }
 
-  void _getLocation() async {
+  Future<void> _getLocation() async {
     List<Placemark> placemark =
         await placemarkFromCoordinates(User.lat, User.long);
 
@@ -527,8 +531,9 @@ class _TodayScreenState extends State<TodayScreen> {
                           SizedBox(height: 10),
                           ElevatedButton(
                             onPressed: () async {
-                              // Tambahkan logika untuk mengirim data perizinan ke Firebase Firestore
-                              _sendPerizinan();
+                              await _getLocation(); // dapatkan lokasi saat di klik tombol
+
+                              _sendPerizinan(); // kirim data ke firebase
                             },
                             child: Text('Submit Perizinan'),
                           ),
