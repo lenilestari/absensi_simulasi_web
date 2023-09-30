@@ -10,4 +10,5 @@ class User {
   static double long = 0;
   static bool canEdit = true;
   static String dailyReportText = "";
+  static String PerizinanText = "";
 }

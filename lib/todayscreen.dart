@@ -23,9 +23,13 @@ class _TodayScreenState extends State<TodayScreen> {
 
   String location = " ";
 
-  bool isCheckingIN = true; // ini untuk mengontrol tampila daily report
+  bool isCheckingIN = true; // ini untuk mengontrol tampilan daily report
+
+  bool Perizinan = true; // ini untuk mengontrol tampilan daily report
 
   String dailyReportText = ""; // ini untuk nyimpan teks dari daily report
+
+  String PerizinanText = ""; // ini untuk nyimpan teks dari perizinan
 
   Color primary = Color(0xFF176B87);
 
@@ -35,6 +39,34 @@ class _TodayScreenState extends State<TodayScreen> {
     _getRecord();
   }
 
+  void _sendPerizinan() async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection("NIM")
+          .where('id', isEqualTo: User.usernameId)
+          .get();
+
+      // Membuat dokumen perizinan dengan tanggal hari ini
+      await FirebaseFirestore.instance
+          .collection("NIM")
+          .doc(querySnapshot.docs[0].id)
+          .collection("Perizinan")
+          .doc(DateFormat('dd MMMM yyyy').format(DateTime.now()))
+          .set({
+        'date': Timestamp.now(),
+        'perizinanText': PerizinanText, // Menyimpan teks perizinan
+      });
+
+      // Mengubah tampilan untuk menampilkan bahwa perizinan telah dikirim
+      setState(() {
+        Perizinan = false;
+      });
+    } catch (e) {
+      // Handle error jika ada
+      print("Error: $e");
+    }
+  }
+
   void _getLocation() async {
     List<Placemark> placemark =
         await placemarkFromCoordinates(User.lat, User.long);
@@ -42,6 +74,8 @@ class _TodayScreenState extends State<TodayScreen> {
     setState(() {
       location =
           "${placemark[0].street}, ${placemark[0].administrativeArea}, ${placemark[0].postalCode}, ${placemark[0].country}";
+      dailyReportText +=
+          "\nLocation: $location"; // Menambahkan lokasi ke daily report
     });
   }
 
@@ -62,13 +96,13 @@ class _TodayScreenState extends State<TodayScreen> {
       setState(() {
         checkIn = querySnapshot2['checkIn'];
         checkOut = querySnapshot2['checkOut'];
-        User.dailyReportText = querySnapshot2['dailyReportText'] ?? "";
+        dailyReportText = querySnapshot2['dailyReportText'] ??
+            ""; // Mengambil data daily report jika ada
       });
     } catch (e) {
       setState(() {
         checkIn = "--/--";
         checkOut = "--/--";
-        User.dailyReportText = "";
       });
     }
     print(checkIn);
@@ -245,34 +279,7 @@ class _TodayScreenState extends State<TodayScreen> {
                             key: key,
                             onSubmit: () async {
                               if (User.lat != 0) {
-                                if (isCheckingIN) {
-                                  setState(() {
-                                    isCheckingIN = false;
-                                  });
-                                } else {
-                                  if (User.lat != 0) _getLocation();
-
-                                  try {
-                                    // simpan data checkout ke firebase firestore
-                                    await FirebaseFirestore.instance
-                                        .collection("NIM")
-                                        .doc(User.dailyReportText)
-                                        .collection("Record")
-                                        .doc(DateFormat('dd MMMM yyyy')
-                                            .format(DateTime.now()))
-                                        .update({
-                                      'date': Timestamp.now(),
-                                      'checkIn': checkIn,
-                                      'checkOut': DateFormat('hh:mm')
-                                          .format(DateTime.now()),
-                                      'CheckInLocation': location,
-                                      'dailyReportText': User.dailyReportText,
-                                    });
-                                  } catch (e) {
-                                    // Handle jika terjadi kesalahan saat menyimpan data
-                                  }
-                                  key.currentState!.reset();
-                                }
+                                _getLocation();
 
                                 print(
                                     DateFormat('hh:mm').format(DateTime.now()));
@@ -318,6 +325,8 @@ class _TodayScreenState extends State<TodayScreen> {
                                     'checkOut': DateFormat('hh:mm')
                                         .format(DateTime.now()),
                                     'CheckInLocation': location,
+                                    'dailyReportText':
+                                        dailyReportText, // Menyimpan daily report
                                   });
                                 } catch (e) {
                                   setState(() {
@@ -336,12 +345,14 @@ class _TodayScreenState extends State<TodayScreen> {
                                         .format(DateTime.now()),
                                     'checkOut': "--/--",
                                     'CheckOutLocation': location,
+                                    'dailyReportText':
+                                        dailyReportText, // Menyimpan daily report
                                   });
                                 }
 
                                 print(
                                     "Database Firebase terpanggil: ${querySnapshot.docs.length}");
-                                key.currentState!.reset();
+                                // key.currentState!.reset();
 
                                 // print(querySnapshot2['checkIn']);
                               } else {
@@ -392,6 +403,8 @@ class _TodayScreenState extends State<TodayScreen> {
                                       'checkOut': DateFormat('hh:mm')
                                           .format(DateTime.now()),
                                       'CheckInLocation': location,
+                                      'dailyReportText':
+                                          dailyReportText, // Menyimpan daily report
                                     });
                                   } catch (e) {
                                     setState(() {
@@ -410,6 +423,8 @@ class _TodayScreenState extends State<TodayScreen> {
                                           .format(DateTime.now()),
                                       'checkOut': "--/--",
                                       'CheckOutLocation': location,
+                                      'dailyReportText':
+                                          dailyReportText, // Menyimpan daily report
                                     });
                                   }
 
@@ -444,7 +459,6 @@ class _TodayScreenState extends State<TodayScreen> {
               margin: const EdgeInsets.only(top: 20),
               child: isCheckingIN
                   ? Container(
-                      // catatan disini kalo ada error cek disini
                       // Tampilkan daily report saat check-in
                       child: Column(
                         children: [
@@ -478,6 +492,50 @@ class _TodayScreenState extends State<TodayScreen> {
                       ),
                     )
                   : Container(), // Sembunyikan daily report saat check-out
+            ),
+            Container(
+              margin: const EdgeInsets.only(top: 20),
+              child: Perizinan
+                  ? Container(
+                      // Tampilkan perizinan saat check-in
+                      child: Column(
+                        children: [
+                          // Tambahkan konten perizinan di sini
+                          Text(
+                            "Perizinan",
+                            style: TextStyle(
+                              fontFamily: "font_2",
+                              fontSize: screenWidth / 20,
+                              color: Colors.black,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          TextFormField(
+                            // Ini adalah input teks untuk perizinan
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              alignLabelWithHint: true,
+                            ),
+                            maxLines: 2,
+                            onChanged: (text) {
+                              // Mengambil nilai input dan menyimpannya
+                              setState(() {
+                                PerizinanText = text;
+                              });
+                            },
+                          ),
+                          SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () async {
+                              // Tambahkan logika untuk mengirim data perizinan ke Firebase Firestore
+                              _sendPerizinan();
+                            },
+                            child: Text('Submit Perizinan'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(), // Sembunyikan perizinan saat check-out
             ),
           ],
         ),
